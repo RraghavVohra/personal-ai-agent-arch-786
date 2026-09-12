@@ -1,0 +1,12 @@
+# Secrets — kabhi commit nahi karni
+.env
+
+# Virtual environment
+venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Generated data — SQLite db + Qdrant local storage
+storage/
