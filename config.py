@@ -20,6 +20,12 @@ QDRANT_PATH = STORAGE_DIR / "qdrant_data"
 # Mem0 history kabhi mix na ho
 MEM0_HISTORY_DB_PATH = STORAGE_DIR / "mem0_history.db"
 
+# Humara apna app-level state ke liye SQLite db — Mem0 ke history db se
+# jaan-boojh kar alag (jo upar already separate rakha hai). Confidence/
+# Decay/Superseded jaisi custom layers isi file mein apni tables
+# banayengi, taaki Mem0 ke internal storage ko kabhi touch na karna pade
+APP_DB_PATH = STORAGE_DIR / "agent_state.db"
+
 # --- Vector store ---
 # Naya collection name isliye diya — Step 1 ke "plumbing_test"
 # collection mein humara dummy data pada hai jiska payload shape
@@ -35,6 +41,23 @@ EMBEDDING_DIMS = 1536  # text-embedding-3-small ka fixed output size
 # explicitly define karna
 LLM_MODEL = "gpt-4o-mini"
 EMBEDDING_MODEL = "text-embedding-3-small"
+
+# --- Decay ---
+# Ebbinghaus forgetting-curve stability constant — kitne hours mein
+# confidence apne 1/e (~37%) tak gir jaata hai agar memory reinforce na
+# ho. 720 hours = 30 din. MVP ke liye single global rate hai — baad mein
+# fact-type ke hisaab se alag rates ban sakte hain (jaise "naam" slow
+# decay, "current job" fast decay), lekin abhi simplicity ke liye ek hi
+DECAY_STABILITY_HOURS = 720
+
+# --- Contradiction Resolution ---
+# Vector-similarity score jisse upar wale candidates hi classifier.py
+# ko LLM-classify karne ke liye bheje jaate hain. Humare khud ke real
+# test mein genuine contradiction (QA engineer -> SDET) ka score 0.4557
+# tha — isse thoda neeche rakha hai starting gate ke taur pe. Zyada
+# real data aane ke baad tune karna aasan hoga, kyunki yeh ek hi jagah
+# define hai
+CONTRADICTION_SIMILARITY_THRESHOLD = 0.35
 
 # --- Mem0 ka config dict ---
 # Yeh exact structure hai jo Memory.from_config() expect karta hai
