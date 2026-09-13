@@ -38,3 +38,21 @@ Yeh document project ke saare architectural decisions aur unke "why" track karta
 - Mem0 OSS `delete_all()` mein confirmed bug hai (GitHub #3928) — poori
   collection wipe kar deta hai, sirf filtered user ka nahi. Kabhi use nahi
   karna; test-isolation ke liye fresh `user_id` use karna.
+
+  ## Step 3 — Persona Layer
+
+- Design Letta/MemGPT ke "persona block" pattern se inspired — ek chhota,
+  character-capped text (limit: 2000 chars) jo agent ki identity/tone/
+  behavioral guidelines define karta hai, hamesha context mein rahega
+  jab Orchestrator (Step 7) reply generate karega.
+- Decided: agent ka naam **Billie**, tone **casual Hinglish**, relationship
+  dynamic **blended life + career coach** (encouraging, invested — sirf
+  task-completion-focused nahi).
+- Abhi static hai; Step 4 (Drift-check) lambi conversations mein isko
+  degrade hone se rokega.
+
+- Learning: Abstract persona instructions ("mix Hindi and English") LLM
+  se consistent behavior nahi nikalwate. Concrete example phrases
+  ("bhai chalo push karte hain") aur explicit anti-patterns ("no generic
+  phrases like 'reignite that spark'") deni padti hain — yeh principle
+  aage Orchestrator (Step 7) ke prompts likhte waqt bhi yaad rakhna hai.

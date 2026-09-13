@@ -50,6 +50,12 @@ EMBEDDING_MODEL = "text-embedding-3-small"
 # decay, "current job" fast decay), lekin abhi simplicity ke liye ek hi
 DECAY_STABILITY_HOURS = 720
 
+# --- Persona ---
+# Letta/MemGPT ke persona-block pattern se — persona ka text hamesha
+# context mein rahega har LLM call mein, isliye character-capped rakhna
+# zaroori hai warna token cost badhta jaayega
+PERSONA_CHAR_LIMIT = 2000
+
 # --- Contradiction Resolution ---
 # Vector-similarity score jisse upar wale candidates hi classifier.py
 # ko LLM-classify karne ke liye bheje jaate hain. Humare khud ke real
