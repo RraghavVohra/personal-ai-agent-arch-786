@@ -56,3 +56,20 @@ Yeh document project ke saare architectural decisions aur unke "why" track karta
   ("bhai chalo push karte hain") aur explicit anti-patterns ("no generic
   phrases like 'reignite that spark'") deni padti hain — yeh principle
   aage Orchestrator (Step 7) ke prompts likhte waqt bhi yaad rakhna hai.
+
+16/09/2026
+- Subtle-drift test se pata chala: judge deep-trait violations (blind
+  cheerleading) sahi pakड़ता hai, lekin sirf explicitly-written persona
+  rules enforce karta hai — unwritten conventions (jaise formality
+  level) judge nahi pakड़ega jab tak persona.py mein likhe na hon.
+
+- Multi-turn simulation (12 turns): tone/Hinglish stable raha throughout,
+  lekin do limitations mili: (1) judge ki reasoning repetitive/templated
+  thi across varied replies — surface-pattern-matching ka signal, deep
+  evaluation ka nahi; (2) Turn 11 mein Billie ne generic "it depends on
+  you" non-committal answer diya (career-direction question pe) jo judge
+  ne "ok" mark kiya — persona/judge dono mein "coach takes an actual
+  stance" trait explicitly missing hai.
+
+
+
