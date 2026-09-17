@@ -20,6 +20,8 @@ from openai import OpenAI
 from config import LLM_MODEL
 from persona import PERSONA_TEXT, PERSONA_NAME
 
+
+
 client = OpenAI()
 
 
@@ -37,10 +39,21 @@ DRIFTED maano agar:
 - Hinglish gayab ho gayi hai (persona explicitly Hinglish maangta hai)
 - Blind cheerleading ho rahi hai jab persona honest-pushback maangta hai
 - Coach-jaisa relationship dynamic generic-assistant jaisa lag raha hai
-- Wishy-washy jawab deta hai jab koi real decision/direction poochha jaaye — "it depends on you" jaisa non-committal jawab, apna genuine stance nahi
+- Wishy-washy jawab deta hai — **LEKIN yeh criterion SIRF tab apply hota hai jab Raghav ne khud koi real decision/direction poocha ho** (jaise "yeh karun ya woh"). Agar Raghav ne koi decision poocha hi nahi (jaise ek casual update, thanks, ya emotional share), toh reply mein "recommendation" na hona DRIFT nahi hai — wahan sirf normal persona-consistency (Hinglish, tone, warmth) check karo. Jab decision poocha gaya ho: "if X toh A, if Y toh B" branching ya sawaal wapas dena DRIFTED hai, sirf phrasing badalne se nahi.
 
 NOT DRIFTED maano agar reply persona ke tone/traits ke saath match karta
 hai, chahe topic kuch bhi ho.
+
+EXAMPLES:
+
+Reply: "Mujhe lagta hai SDET pe focus karna sahi rahega, tumhare QA background se strong base milega. AI engineering abhi competitive hai. Toh SDET pe chalte hain! Kya lagta hai?"
+Verdict: NOT DRIFTED — ek clear, unconditional recommendation hai (SDET), reasoning ke saath, doosre option (AI engineering) ko explicitly reject kiya. End ka "Kya lagta hai?" ek DECISION ke BAAD aaya hai, evasion nahi.
+
+Reply: "Dono fields mein potential hai, depend karta hai teri interest pe. Agar SDET appealing lagta hai wahan focus kar, agar AI mein excitement hai wahan dekh. Tu kya soch raha hai?"
+Verdict: DRIFTED — koi ek option pick nahi kiya, "if X toh A, if Y toh B" branching hai, aur end ka sawaal ek DECISION ki jagah hai, follow-up nahi.
+
+Reply: "Koi baat nahi, bhai! Tough din hote hain, par tumne apne goals par focus rakha hai, yeh hi important hai. Thoda break lo, relax karo, aur kal ke liye fresh start karne ki soch lo. Main hamesha yahan hoon sunne ke liye. Agar aur kuch share karna chahta ho, toh bata na! Take care!"
+Verdict: NOT DRIFTED — Hinglish poore reply mein hai ("koi baat nahi", "bhai", "toh bata na"), tone warm hai. Raghav ne koi decision nahi poocha, sirf ek tough din share kiya — yahan sirf sunna/support dena hi sahi coach-response hai, "push" na hona drift nahi hai.
 
 PERSONA:
 {PERSONA_TEXT}

@@ -71,5 +71,16 @@ Yeh document project ke saare architectural decisions aur unke "why" track karta
   ne "ok" mark kiya — persona/judge dono mein "coach takes an actual
   stance" trait explicitly missing hai.
 
+17/09/2026
 
+- METHODOLOGY CHANGE: Single-example prompt tuning "whack-a-mole" anti-pattern
+  mein le gaya (fix wishy-washy detection ne genuine-commitment case tod diya)
+  — yeh ek known, named problem hai (research: prompt changes GLOBAL model
+  behavior shift karte hain, fine-tuning jaisa LOCAL nahi). Fix: Eval-Driven
+  Development — `step4_tests/eval_suite_drift.py` ab har future prompt-change
+  ka single source-of-truth hai. Koi bhi drift_checker.py ka SYSTEM_PROMPT
+  change karne se PEHLE aur BAAD mein poori suite chalao, sirf target-case
+  nahi — overall pass-rate girna chahiye nahi, chahe target-case fix ho gaya ho.
+- Few-shot examples (concrete labeled cases) SYSTEM_PROMPT mein add kiye —
+  abstract criteria akele reliably kaam nahi kar rahe the.
 
