@@ -84,3 +84,39 @@ Yeh document project ke saare architectural decisions aur unke "why" track karta
 - Few-shot examples (concrete labeled cases) SYSTEM_PROMPT mein add kiye —
   abstract criteria akele reliably kaam nahi kar rahe the.
 
+18/09/2026
+
+- Extended 24-turn simulation: persona solid raha — Hinglish/tone consistent,
+  dono genuine decision-questions (turn 11, turn 19) mein committed answers
+  mile, turn-12-type bug repeat nahi hua.
+- KNOWN LIMITATION (unresolved): judge ka reasoning-text abhi bhi kabhi-kabhi
+  input ko galat represent karta hai (turn 19: "koi decision nahi poocha"
+  jabki poocha gaya tha) — verdict is baar sahi nikla, lekin underlying
+  reliability-gap wahi hai jo Turn-12 mein dikha tha. Likely gpt-4o-mini-
+  as-judge ki inherent limitation, prompt-tuning se poori tarah fix nahi
+  hoga (whack-a-mole risk). Future option: judge ke liye stronger model
+  (gpt-4o) try karna — call-frequency kam hai toh cost-impact chhota.
+- Judge ka reasoning abhi bhi kaafi repetitive/templated hai across turns
+  — shallow pattern-matching ka signal, deep analysis ka nahi. v1 ke liye
+  accepted limitation, blocking nahi.
+- DECISION: Step 4 v1-complete maana — detection + repair + 8-case eval-
+  suite + ek clean 24-turn simulation. Judge-reliability gaps documented,
+  chase nahi kiya aage — Step 7 (Orchestrator) mein agar real problem bana
+  toh revisit karenge.
+
+- ROOT-CAUSE FIX: check_persona_drift() pehle sirf reply dekhta tha, Raghav
+  ka original message kabhi nahi — judge "andha" tha, guess karta tha decision
+  poocha gaya tha ya nahi. Ab dono (user_message + reply) explicitly diye
+  jaate hain. Yeh Turn-12/Turn-19 wali reasoning-inaccuracy ka ASLI root-cause
+  tha, gpt-4o-mini ki "weakness" nahi thi jaisa pehle laga.
+- Isi ke saath judge model bhi DRIFT_JUDGE_MODEL (gpt-4o) pe upgrade kiya —
+  low-frequency calls hain, cost-impact chhota.
+- VERIFIED: 8/8 eval-suite pass, aur targeted reasoning-accuracy test
+  (Turn-19) confirm karta hai judge ab factually correct reasoning deta hai
+  decision-context ke baare mein.
+- Minor known gap (non-blocking): case 4 ki reasoning mein ek imprecise line
+  thi ("lacks Hinglish" jabki Hinglish present tha) — verdict correct raha,
+  justification ka ek hissa loose tha. Accepted residual risk, verdict-
+  accuracy affected nahi hui.
+- STATUS: Step 4 (Drift-check) solid — detection + repair + root-cause-fixed
+  judge + eval-suite + 24-turn simulation, sab verified.

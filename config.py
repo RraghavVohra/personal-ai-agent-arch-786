@@ -42,6 +42,13 @@ EMBEDDING_DIMS = 1536  # text-embedding-3-small ka fixed output size
 LLM_MODEL = "gpt-4o-mini"
 EMBEDDING_MODEL = "text-embedding-3-small"
 
+# Drift-judge ke liye alag, stronger model — Billie ki generation aur
+# classifier.py dono gpt-4o-mini pe rehte hain (sasta, high-frequency
+# calls), lekin judge ki reasoning mein 3 baar input-misrepresentation
+# dekha gaya hai (Turn 12, Turn 19). Judge calls kam-frequency (periodic)
+# hain, toh stronger model yahan cost-effective hai
+DRIFT_JUDGE_MODEL = "gpt-4o"
+
 # --- Decay ---
 # Ebbinghaus forgetting-curve stability constant — kitne hours mein
 # confidence apne 1/e (~37%) tak gir jaata hai agar memory reinforce na

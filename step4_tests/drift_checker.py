@@ -17,7 +17,7 @@ load_dotenv()
 
 from pydantic import BaseModel
 from openai import OpenAI
-from config import LLM_MODEL
+from config import LLM_MODEL, DRIFT_JUDGE_MODEL
 from persona import PERSONA_TEXT, PERSONA_NAME
 
 
@@ -60,24 +60,25 @@ PERSONA:
 """
 
 
-def check_persona_drift(reply_text: str) -> DriftCheckResult:
+def check_persona_drift(reply_text: str, user_message: str) -> DriftCheckResult:
+    """
+    user_message: Raghav ka original message jiske jawab mein yeh reply
+    aaya. Pehle yeh function sirf reply akela leta tha — judge ko pata
+    hi nahi hota tha Raghav ne ASAL mein kya poocha tha, sirf reply se
+    guess karna padta tha. Yehi Turn-12/Turn-19 reasoning-inaccuracy ka
+    asli root-cause tha, model-weakness nahi.
+    """
     completion = client.beta.chat.completions.parse(
-        model=LLM_MODEL,
+        model=DRIFT_JUDGE_MODEL,
         temperature=0.1,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"REPLY TO CHECK:\n{reply_text}"},
+            {"role": "user", "content": f"USER'S MESSAGE:\n{user_message}\n\nBILLIE'S REPLY:\n{reply_text}"},
         ],
         response_format=DriftCheckResult,
     )
     message = completion.choices[0].message
 
-    # Why yeh check zaroori hai: .parsed None hota hai do cases mein —
-    # (1) model ne refuse kiya (safety), tab .refusal mein wajah hoti
-    # hai, ya (2) output schema ke against validate nahi hua. Pehle
-    # humara code seedha None maan ke crash ho jaata tha kisi confusing
-    # jagah pe (jaise .is_drifted access karte waqt) — ab exact wajah
-    # turant saamne aayegi
     if message.parsed is None:
         raise RuntimeError(
             f"check_persona_drift: LLM ne parsed output nahi diya. "
@@ -85,6 +86,7 @@ def check_persona_drift(reply_text: str) -> DriftCheckResult:
         )
 
     return message.parsed
+
 
 def repair_reply(user_message: str, drift_reasoning: str) -> str:
     """

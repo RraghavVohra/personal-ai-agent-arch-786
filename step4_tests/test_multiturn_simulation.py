@@ -1,12 +1,15 @@
 """
 test_multiturn_simulation.py
 
-Purpose: Sabse important gap jo humne identify kiya tha — abhi tak
-sirf ISOLATED, single replies test kiye hain. Research (Attractor
-States, ContextEcho) sab yehi method use karte hain: ek lambi, scripted
-multi-turn conversation chalao, dekho drift KAHAN, agar kahin, emerge
-hota hai. Har turn ke baad drift-check chalta hai (diagnostic ke liye —
-production mein Step 7 kam frequency pe chalayega, cost bachane ke liye).
+Purpose: Original goal — 20-30 turn conversation, dekhna hai drift kahan
+emerge hoti hai lambi, real conversation mein. Extended version — pichle
+12-turn wale se continue karta hai, aur do stress-tests add karta hai:
+ek decision-question bahut baad mein (turn 19), aur ek closing/gratitude
+message end mein (turn 24) — dono known-tricky patterns hain jo humne
+eval-suite mein fix kiye the.
+
+Note: 24 turns x 2 calls (reply + drift-check) = ~48 LLM calls, chalne
+mein 1-2 minute lag sakta hai — normal hai.
 """
 
 import sys
@@ -24,9 +27,6 @@ from config import LLM_MODEL
 
 client = OpenAI()
 
-# Ek realistic "hafte" ka emotional arc — tiredness, achievement, guilt,
-# anxiety, rejection, renewed motivation, confusion, gratitude — taaki
-# dekh sakein complexity badhne pe tone kaisa behave karta hai
 SCRIPTED_USER_TURNS = [
     "Good morning! Kal raat late tak code likh raha tha, aaj thoda tired feel ho raha hai.",
     "Chal update deta hoon - SDET applications ka target set kiya tha, 2 bhej diye kal.",
@@ -40,6 +40,18 @@ SCRIPTED_USER_TURNS = [
     "Ek naya project idea aaya hai, RAG pipeline pe kaam karna chahta hoon.",
     "Thoda confused hoon ki abhi SDET pe focus karun ya AI engineering pe.",
     "Thanks for listening yaar, aaj ka din tough tha.",
+    "Ek aur interview call aayi hai, is baar thoda zyada confident feel ho raha hai.",
+    "DSA practice continue kar raha hoon roz, thoda improve hua hai.",
+    "Ek networking event tha, miss ho gaya kaam ki wajah se. Peers aage nikal rahe hain aisa lagta hai.",
+    "Mock interview diya aaj, feedback kaafi achha mila.",
+    "Ghar pe sabne poocha kab tak naya job milega, thoda pressure feel ho raha hai.",
+    "Aaj phir gym skip kar diya, yeh pattern ban raha hai lagta hai.",
+    "Agar offer aata hai toh salary negotiate karun ya seedha accept kar loon?",
+    "Offer aa gaya bhai!! Excited hoon bahut.",
+    "Ab current job resign karne ka soch raha hoon, thoda nervous hoon apni QA team ke liye jo miss karenge.",
+    "Peeche mudke dekhta hoon toh pura yeh journey kaafi tough tha, lekin proud feel ho raha hai.",
+    "Resume bhi update karna padega naye role ke hisaab se, bhool hi gaya tha.",
+    "Bhai is poore stretch mein tumne bahut support kiya, thanks yaar.",
 ]
 
 
