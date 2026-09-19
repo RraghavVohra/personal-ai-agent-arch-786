@@ -120,3 +120,23 @@ Yeh document project ke saare architectural decisions aur unke "why" track karta
   accuracy affected nahi hui.
 - STATUS: Step 4 (Drift-check) solid — detection + repair + root-cause-fixed
   judge + eval-suite + 24-turn simulation, sab verified.
+
+19/09/2026
+## Step 5 — Mood Detection
+
+- Ekman ke 6 basic emotions (joy, sadness, anger, fear, disgust, surprise)
+  + neutral use kiye — established psychology framework, khud invent nahi kiya.
+- Proactive design (Step 4 ke experience se seekha): system prompt explicitly
+  current-vs-past emotion distinguish karne ka instruction rakhta hai, taaki
+  "past mein recount kiya emotion = current mood" wali known pitfall shuru
+  se hi avoid ho.
+- 6/6 test cases pass, dono temporal directions (past-bad-now-good AND
+  past-good-now-bad) aur ek mixed-signal case sahi classify hue.
+- Untested abhi (deferred, blocking nahi): multi-emotion messages, lambi/
+  rambling real messages, intensity-score calibration, conversation-history
+  context. Yeh Orchestrator (Step 7) integration ke waqt real-flow mein
+  test honge.
+- Model: LLM_MODEL (gpt-4o-mini) — per-message chalega (drift-check jaisa
+  periodic nahi), toh cost-sensitive default rakha. Reliability-issue aane
+  pe DRIFT_JUDGE_MODEL jaisa upgrade-path available hai.
+
