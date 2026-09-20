@@ -2,9 +2,8 @@
 test_mood_detector.py
 
 Purpose: Isolated test — mood_detector.py ka detection check karta hai.
-Case 3 sabse zaroori hai: yeh research se mila pitfall directly test
-karta hai (past emotion recount vs current state) — proactively design
-kiya, discover hone ke baad nahi.
+Case 3, 5, 6 sabse zaroori hain: temporal-reasoning aur mixed-signal
+pitfalls ko directly target karte hain.
 """
 
 import sys
@@ -35,13 +34,13 @@ TEST_CASES = [
         "message": "I sent 2 job applications yesterday.",
         "expected_emotion": "neutral",
     },
-        {
-        "label": "REVERSE: past positive, now negative (opposite direction check)",
+    {
+        "label": "REVERSE: past positive, now negative",
         "message": "Pehle running bahut pasand tha, lekin ab bilkul mann nahi karta uska, boring lagta hai.",
         "expected_emotion": "sadness",
     },
     {
-        "label": "Mixed signal: good past event, but current anxiety about outcome",
+        "label": "Mixed signal: good past event, current anxiety",
         "message": "Interview toh accha gaya tha, lekin ab tak koi response nahi aaya unka, thoda anxious feel ho raha hai wait karte karte.",
         "expected_emotion": "fear",
     },
@@ -55,7 +54,7 @@ def run_test():
         status = "PASS" if result.emotion.value == case["expected_emotion"] else "FAIL"
         passed += status == "PASS"
         print(f"[{i}/{len(TEST_CASES)}] {case['label']} -> {status}")
-        print(f"    Expected: {case['expected_emotion']} | Got: {result.emotion.value} (intensity: {result.intensity})")
+        print(f"    Expected: {case['expected_emotion']} | Got: {result.emotion.value} (intensity: {result.intensity}) | topic: {result.topic.value}")
         print(f"    Reasoning: {result.reasoning}\n")
 
     print(f"{passed}/{len(TEST_CASES)} passed.")

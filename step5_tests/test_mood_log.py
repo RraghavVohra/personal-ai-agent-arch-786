@@ -2,9 +2,7 @@
 test_mood_log.py
 
 Purpose: Isolated test — mood_log.py ka schema, insert, aur trend-
-retrieval. Koi LLM call nahi. Ek "purani" entry (8 din, 7-day window
-se BAHAR) deliberately daali hai, taaki verify ho ki get_mood_trend()
-sahi se filter karta hai, sab kuch return nahi kar deta.
+retrieval. Koi LLM call nahi.
 """
 
 import sys
@@ -13,19 +11,23 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from datetime import datetime, timezone, timedelta
-from mood_log import log_mood, get_mood_trend
+from mood_log import log_mood, get_mood_trend, clear_mood_log
 
 TEST_TAG = "TEST-mood-log-check"
 
 
 def run_test():
+    # Self-cleaning: purani run se bacha data pehle clear karo
+    deleted = clear_mood_log(tag=TEST_TAG)
+    print(f"[0/2] Cleared {deleted} old tagged entries.\n")
+
     now = datetime.now(timezone.utc)
 
-    log_mood("joy", 0.8, f"{TEST_TAG}: got the offer!", timestamp=now.isoformat())
-    log_mood("fear", 0.5, f"{TEST_TAG}: waiting on interview result", timestamp=(now - timedelta(days=2)).isoformat())
+    log_mood("joy", 0.8, f"{TEST_TAG}: got the offer!", topic="job_search", timestamp=now.isoformat())
+    log_mood("fear", 0.5, f"{TEST_TAG}: waiting on interview result", topic="job_search", timestamp=(now - timedelta(days=2)).isoformat())
 
     old_timestamp = (now - timedelta(days=8)).isoformat()
-    log_mood("sadness", 0.6, f"{TEST_TAG}: old entry, should be filtered out", timestamp=old_timestamp)
+    log_mood("sadness", 0.6, f"{TEST_TAG}: old entry, should be filtered out", topic="general", timestamp=old_timestamp)
 
     print("[1/2] 3 entries logged (2 recent, 1 old-outside-window).")
 

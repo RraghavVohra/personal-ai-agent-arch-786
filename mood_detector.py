@@ -2,20 +2,16 @@
 mood_detector.py
 
 Story: Billie ko Raghav ka current emotional state pehchanna zaroori
-hai taaki woh sahi tarah respond kare — ek genuinely invested coach
-mood ko ignore nahi karta. Ekman ke 6 basic emotions (joy, sadness,
-anger, fear, disgust, surprise) + neutral use kiye hain — yeh
-established psychology framework hai, khud categories invent nahi ki.
+hai. Ekman ke 6 basic emotions + neutral use kiye hain (established
+psychology framework). Explicitly current-vs-past distinguish karta
+hai (Step 4 ke drift-judge se seekha pitfall) — past mein recount kiya
+emotion current mood nahi maana jaata.
 
-CRITICAL DESIGN NOTE: Research (aur Step 4 ka apna experience) confirm
-karta hai — naive detectors PAST mein recount kiya hua emotion ("pichle
-hafte stressed tha") ko CURRENT mood samajh lete hain, sirf keyword
-dekh ke. Yeh function isliye explicitly PEHLE SE instruct karta hai
-current-vs-past distinguish karne ke liye — discover hone ke baad fix
-nahi kiya, shuru se design mein hai.
-
-Abhi sirf DETECTION hai. Persona/memory ke saath integration Step 7
-(Orchestrator) mein hoga — abhi scope isolated rakha hai.
+Topic bhi FIXED categories mein hai (Emotion jaisa hi), free-text nahi
+— pehli try mein free-text tha, lekin usse "job interview" / "interview
+anxiety" / "waiting for response" jaise teen alag strings ban gaye ek
+hi underlying story ke liye, pattern-matching tootti thi. Fixed
+categories isliye zaroori hain, exactly jaise emotion ke liye hai.
 """
 
 from dotenv import load_dotenv
@@ -39,26 +35,43 @@ class Emotion(str, Enum):
     NEUTRAL = "neutral"
 
 
+class Topic(str, Enum):
+    JOB_SEARCH = "job_search"              # applications, interviews, offers, rejections
+    CAREER_DIRECTION = "career_direction"  # SDET vs AI engineering jaisi confusion
+    WORK_PRESSURE = "work_pressure"        # current job/QA-team ka stress
+    FITNESS = "fitness"                    # running, gym
+    FAMILY = "family"                      # family expectations/pressure
+    GENERAL = "general"                    # koi bhi aur cheez, catch-all
+
+
 class MoodDetectionResult(BaseModel):
     emotion: Emotion
     intensity: float  # 0.0 (barely present) to 1.0 (very strong)
+    topic: Topic
     reasoning: str
 
 
 SYSTEM_PROMPT = """Tum ek mood-detection classifier ho. Tumhe ek user ka message
-milega. Tumhe uska CURRENT emotional state classify karna hai, Ekman ke 6 basic
-emotions (joy, sadness, anger, fear, disgust, surprise) ya neutral mein se ek,
-saath ek intensity score (0.0 se 1.0).
+milega. Tumhe teen cheezein dene hain:
+
+1. emotion: Ekman ke 6 basic emotions (joy, sadness, anger, fear, disgust,
+   surprise) ya neutral, uske CURRENT-MOMENT state ke hisaab se.
+2. intensity: 0.0 se 1.0.
+3. topic: in FIXED categories mein se ek chuno — job_search (applications,
+   interviews, offers, rejections), career_direction (SDET vs AI engineering
+   jaisi confusion), work_pressure (current job ka stress), fitness (running,
+   gym), family, ya general (kuch aur). Free-text mat banana — inhi mein se
+   ek pick karo, taaki baad mein pattern-matching ho sake (jaise "job_search
+   se related 4 mood-dips is hafte").
 
 CRITICAL RULE: Sirf message ka CURRENT-MOMENT emotional state classify karo,
 jo baat maazi (past) mein recount ki gayi hai woh nahi. Agar user bole "pichle
 hafte stressed tha, lekin ab achha lag raha hai" — current mood us
 resolution/relief ke hisaab se hona chahiye (joy ya neutral), "sadness"/"fear"
-NAHI, chahe "stressed" word maujood ho. Time-markers (pichle, kal, "but now",
-"ab") dhyan se padhna — yeh batate hain kya abhi ki baat hai, kya purani.
+NAHI, chahe "stressed" word maujood ho. Time-markers dhyan se padhna.
 
 Agar message mein koi clear emotional signal nahi hai (sirf factual update),
-NEUTRAL do, low intensity ke saath."""
+NEUTRAL do, low intensity ke saath, topic phir bhi extract karo."""
 
 
 def detect_mood(user_message: str) -> MoodDetectionResult:
@@ -73,8 +86,8 @@ def detect_mood(user_message: str) -> MoodDetectionResult:
     )
     message = completion.choices[0].message
 
-    # Wahi defensive check jo drift_checker.py mein seekha tha —
-    # .parsed None ho sakta hai refusal ya schema-mismatch se
+    # .parsed None ho sakta hai refusal ya schema-mismatch se (Step 4
+    # ka seekha hua defensive check)
     if message.parsed is None:
         raise RuntimeError(
             f"detect_mood: LLM ne parsed output nahi diya. "

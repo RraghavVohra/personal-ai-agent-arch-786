@@ -140,3 +140,46 @@ Yeh document project ke saare architectural decisions aur unke "why" track karta
   periodic nahi), toh cost-sensitive default rakha. Reliability-issue aane
   pe DRIFT_JUDGE_MODEL jaisa upgrade-path available hai.
 
+20/09/2026
+- Storage (mood_log.py) design: Confidence/Decay (Step 2) jaan-boojh kar
+  reuse nahi kiya — mood ek time-series event hai (fact nahi), poori
+  history chahiye trend ke liye, ek decayed number mein summarize nahi.
+  Same DB file (APP_DB_PATH) reuse kiya, naya schema.
+- mood_manager.py detect+log ko wire karta hai — bilkul memory_manager.py
+  jaisa integration pattern (Step 2).
+- End-to-end validation: 7-day simulated week, clean run (test-data
+  cleanup ke baad) — emotional arc sahi order mein capture hua
+  (fear-heavy start -> sadness -> joy-recovery end).
+- STANDING PRACTICE (teesri baar seekha — Mem0/Step 2, ab mood_log):
+  koi bhi NAYA persistent-storage component banate waqt, ek clear/cleanup
+  utility SHURU SE hi saath banao, discover-after-contamination nahi.
+  clear_mood_log() isi wajah se add kiya.
+- Deferred (blocking nahi, Step 7 integration ke waqt real-flow mein test
+  honge): multi-emotion messages, lambi/rambling messages, intensity-
+  calibration, conversation-history context. Trend-INTERPRETATION (raw
+  data ko insight mein badalna, jaise "tough week, recovered") explicitly
+  Step 7 (Orchestrator) ka scope hai — mood_log sirf raw data deta hai,
+  khud interpret nahi karta.
+- STATUS: Step 5 (Mood) COMPLETE — detection + storage + integration +
+  end-to-end simulation, sab verified.
+
+- Topic-tagging bug discovered aur fixed: pehla version free-text topic
+  use karta tha, jisse "job interview"/"interview anxiety"/"waiting for
+  response" teen ALAG strings ban gayi ek hi underlying story ke liye —
+  pattern-matching tootti thi. Fix: Topic ko FIXED Enum banaya (Emotion
+  jaisa hi) — job_search, career_direction, work_pressure, fitness,
+  family, general.
+- VERIFIED: 7-day simulation mein 4 job-search-related entries (interview,
+  wait, tension, rejection) ab consistently `job_search` tag ke saath
+  group hue — asli maksad (pattern-detection enable karna) proven.
+- Self-cleaning fix: teesri baar "test-data cleanup bhool gaye" wali
+  galti dohrayi thi (Mem0/Step 2, mood_log 2x) — ab test-scripts khud
+  apna purana data clear karke shuru hote hain, insaan ki memory pe
+  depend nahi karte.
+- Deferred (blocking nahi): compound emotions (single-emotion schema
+  hai), aur privacy/security (plaintext local SQLite) — yeh Step 6
+  (Safety) ka natural scope hai, wahan revisit karenge.
+- STATUS: Step 5 (Mood) COMPLETE — detection (6/6, dono temporal
+  directions + mixed-signal) + storage + topic-tagging (fixed taxonomy,
+  verified grouping) + self-cleaning tests, sab solid.
+
