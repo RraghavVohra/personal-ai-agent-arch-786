@@ -49,6 +49,11 @@ EMBEDDING_MODEL = "text-embedding-3-small"
 # hain, toh stronger model yahan cost-effective hai
 DRIFT_JUDGE_MODEL = "gpt-4o"
 
+# Gate 2 (distress-tiering) ke liye alag constant - DRIFT_JUDGE_MODEL se
+# jaan-boojh kar alag rakha hai, taaki dono independently tune ho sakein.
+# Stakes drift-judge se bhi zyada hai yahan, isliye stronger model.
+SAFETY_JUDGE_MODEL = "gpt-4o"
+
 # --- Decay ---
 # Ebbinghaus forgetting-curve stability constant — kitne hours mein
 # confidence apne 1/e (~37%) tak gir jaata hai agar memory reinforce na
@@ -71,6 +76,19 @@ PERSONA_CHAR_LIMIT = 2000
 # real data aane ke baad tune karna aasan hoga, kyunki yeh ek hi jagah
 # define hai
 CONTRADICTION_SIMILARITY_THRESHOLD = 0.35
+
+# --- Generation ---
+# Classifiers/judges 0.1 pe hain (consistency chahiye). Conversational
+# reply ke liye zyada rakha hai - Billie ko har baar bilkul same-words
+# mein nahi bolna chahiye, thoda natural-variation chahiye
+GENERATION_TEMPERATURE = 0.8
+
+# --- User ---
+# Single-user personal agent hai - ek hi real production user_id.
+# Test-files apna alag test-specific user_id use karenge (jaise Step 2
+# mein), taaki testing se asli Billie-memory kabhi pollute na ho
+USER_ID = "raghav"
+
 
 # --- Mem0 ka config dict ---
 # Yeh exact structure hai jo Memory.from_config() expect karta hai
