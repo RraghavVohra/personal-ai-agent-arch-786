@@ -36,6 +36,13 @@ MODERATE_RESPONSE_SUFFIX = (
     "kar sakta hai. Agar chahiye toh main resources dhundhne mein help kar sakta hoon.)"
 )
 
+ACUTE_FOLLOWUP = (
+    "Ek second bhai - chahe kidding mein bola ho ya nahi, main sach mein "
+    "confirm karna chahta tha ki sab thik hai. Agar kabhi genuinely aisa "
+    "lage jaisa abhi bola tha, main yahi hoon baat karne ke liye, aur "
+    "upar wale numbers bhi hamesha available hain."
+)
+
 
 def get_safety_action(tier: DistressTier) -> str | None:
     """

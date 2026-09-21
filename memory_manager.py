@@ -16,6 +16,8 @@ saath retrieve karta hai — superseded facts hide, confidence
 recalculate, aur retrieval khud ek chhota reinforcement deta hai.
 """
 
+import logging
+import atexit
 import sqlite3
 from datetime import datetime, timezone
 from dotenv import load_dotenv
@@ -27,7 +29,32 @@ from classifier import classify_relationship, Relationship
 from decay import calculate_decayed_confidence
 from mem0 import Memory
 
+# Mem0 ke andar do OPTIONAL features (spaCy-lemmatization, fastembed-
+# BM25) missing hone par warnings aati hain - humara MEM0_CONFIG
+# inhe kabhi configure hi nahi karta (hum OpenAI llm/embedder + plain
+# Qdrant-vector-search use karte hain), isliye yeh un cheezon ke
+# baare mein hain jo humein chahiye hi nahi. Install karne ke bajaye
+# suppress karna sahi hai - architecture-consistent, extra
+# dependencies nahi add karni bina wajah
+logging.getLogger("mem0").setLevel(logging.ERROR)
+
 memory = Memory.from_config(MEM0_CONFIG)
+
+
+@atexit.register
+def _close_qdrant_client():
+    """
+    QdrantClient ka __del__ interpreter-shutdown ke waqt ek harmless
+    lekin noisy ImportError print karta hai (Python ka apna module-
+    teardown-timing quirk hai, real bug nahi hai - qdrant-client ke
+    actual source se verify kiya: __del__ sirf close() call karta
+    hai). Yahan explicitly, program khatam hone SE PEHLE close karke,
+    __del__ ko shutdown ke waqt kuch karne ki zaroorat hi nahi rehti.
+    """
+    try:
+        memory.vector_store.client.close()
+    except Exception:
+        pass
 
 
 def _get_connection():
