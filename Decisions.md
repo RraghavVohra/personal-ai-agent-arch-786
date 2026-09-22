@@ -140,46 +140,113 @@ Yeh document project ke saare architectural decisions aur unke "why" track karta
   periodic nahi), toh cost-sensitive default rakha. Reliability-issue aane
   pe DRIFT_JUDGE_MODEL jaisa upgrade-path available hai.
 
-20/09/2026
-- Storage (mood_log.py) design: Confidence/Decay (Step 2) jaan-boojh kar
-  reuse nahi kiya — mood ek time-series event hai (fact nahi), poori
-  history chahiye trend ke liye, ek decayed number mein summarize nahi.
-  Same DB file (APP_DB_PATH) reuse kiya, naya schema.
-- mood_manager.py detect+log ko wire karta hai — bilkul memory_manager.py
-  jaisa integration pattern (Step 2).
-- End-to-end validation: 7-day simulated week, clean run (test-data
-  cleanup ke baad) — emotional arc sahi order mein capture hua
-  (fear-heavy start -> sadness -> joy-recovery end).
-- STANDING PRACTICE (teesri baar seekha — Mem0/Step 2, ab mood_log):
-  koi bhi NAYA persistent-storage component banate waqt, ek clear/cleanup
-  utility SHURU SE hi saath banao, discover-after-contamination nahi.
-  clear_mood_log() isi wajah se add kiya.
-- Deferred (blocking nahi, Step 7 integration ke waqt real-flow mein test
-  honge): multi-emotion messages, lambi/rambling messages, intensity-
-  calibration, conversation-history context. Trend-INTERPRETATION (raw
-  data ko insight mein badalna, jaise "tough week, recovered") explicitly
-  Step 7 (Orchestrator) ka scope hai — mood_log sirf raw data deta hai,
-  khud interpret nahi karta.
-- STATUS: Step 5 (Mood) COMPLETE — detection + storage + integration +
-  end-to-end simulation, sab verified.
+20/09/2026 (Safety layer shuru)
+- Disclosure (disclosure.py) - Safeguard 1, session-start static message.
+- Gate 1 (moderation_gate.py) - OpenAI omni-moderation-latest, sirf
+  self-harm categories (self-harm, self-harm/intent, self-harm/instructions).
+- BUG MILA: same-meaning sentence, Hindi mein self_harm score 0.08,
+  English mein 0.78 - 10x gap. ROOT-CAUSE: Moderation API ka training-
+  data English-heavy hai, patch (threshold-tuning) nahi kiya.
+- FIX: translate-then-moderate - message ko English translate (gpt-4o-mini)
+  karke phir moderate karte hain.
+- VERIFIED: eval_suite_gate1.py 6/6 (generalization-case + ambiguous
+  "chhodna" job-vs-jeena false-positive-check), fail-closed guarantee
+  mocked-exception se force-verify kiya (comment mein likha dava nahi raha).
 
-- Topic-tagging bug discovered aur fixed: pehla version free-text topic
-  use karta tha, jisse "job interview"/"interview anxiety"/"waiting for
-  response" teen ALAG strings ban gayi ek hi underlying story ke liye —
-  pattern-matching tootti thi. Fix: Topic ko FIXED Enum banaya (Emotion
-  jaisa hi) — job_search, career_direction, work_pressure, fitness,
-  family, general.
-- VERIFIED: 7-day simulation mein 4 job-search-related entries (interview,
-  wait, tension, rejection) ab consistently `job_search` tag ke saath
-  group hue — asli maksad (pattern-detection enable karna) proven.
-- Self-cleaning fix: teesri baar "test-data cleanup bhool gaye" wali
-  galti dohrayi thi (Mem0/Step 2, mood_log 2x) — ab test-scripts khud
-  apna purana data clear karke shuru hote hain, insaan ki memory pe
-  depend nahi karte.
-- Deferred (blocking nahi): compound emotions (single-emotion schema
-  hai), aur privacy/security (plaintext local SQLite) — yeh Step 6
-  (Safety) ka natural scope hai, wahan revisit karenge.
-- STATUS: Step 5 (Mood) COMPLETE — detection (6/6, dono temporal
-  directions + mixed-signal) + storage + topic-tagging (fixed taxonomy,
-  verified grouping) + self-cleaning tests, sab solid.
+21/09/2026 (Safety complete + Orchestrator)
+- Gate 2 (distress_classifier.py) - custom LLM judge, 4 tiers
+  (NONE/MILD/MODERATE/ACUTE), Pydantic structured-output.
+  SAFETY_JUDGE_MODEL = gpt-4o, jaan-boojh kar DRIFT_JUDGE_MODEL se
+  alag constant (independently tune-able).
+- BUG MILA (eval-driven): ACUTE-definition sirf active-desire ideation
+  cover karti thi ("jeena chhodna chahta hoon") - "perceived burdensomeness"
+  (passive ideation, "koi farak nahi padega agar main na rahoon") miss
+  ho raha tha, jo equally-serious clinical marker hai (Joiner's
+  Interpersonal Theory of Suicide).
+- FIX: ACUTE-definition mein burdensomeness explicitly add kiya.
+- VERIFIED: eval_suite_gate2.py 6/6, do adversarial cases ke saath
+  (Hinglish hyperbole "marr jaunga is workload se" -> correctly MILD;
+  mixed-signal message with concerning tail -> correctly ACUTE).
+- safety_manager.py - Gate1+Gate2 OR-escalation (jo bhi zyada-severe,
+  wahi jeetega, kabhi downgrade nahi).
+- safety_responses.py - action-layer: NONE/MILD no-action, MODERATE
+  gentle-suffix, ACUTE FIXED (LLM-generated NAHI) crisis-message,
+  verified India helplines (Tele-MANAS 14416, KIRAN 1800-599-0019) -
+  Ben-Zion Safeguard 2 (high-risk moment mein pause + verified-resources,
+  improvisation nahi).
+- STATUS: Step 6 (Safety) COMPLETE - Disclosure+Gate1+Gate2+safety_manager+
+  safety_responses, sab tested. Gate 2b (mood-history, multi-day pattern)
+  explicitly DEFERRED, backlog mein.
 
+- generate_reply.py - asli missing core-piece: koi bhi function Billie
+  ka ACTUAL reply generate nahi karta tha (drift_checker sirf judge
+  karta hai, banata nahi). Persona+memory+mood ko system-prompt mein
+  fold karta hai. GENERATION_TEMPERATURE=0.8 add kiya (classifiers 0.1
+  pe hain, conversational-warmth ke liye zyada chahiye).
+- Test-strategy: naya subjective-judge nahi likha, Step 4 ka
+  check_persona_drift() reuse kiya output-verify karne ke liye.
+- INCIDENT: drift_checker.py disk se missing mili mid-project (accidental
+  delete/save-fail). Root-cause-fixed version (two-arg signature -
+  reply_text + user_message, Step 4 ka context-bug-fix) se rebuild kiya.
+- STANDING PRACTICE: har working-step ke baad git commit karna hai, isi
+  incident se seekha.
+- orchestrator.py (handle_message()) - Safety -> Mood -> Memory-retrieve
+  -> Generate -> Drift-check(+repair) -> MODERATE-suffix -> Memory-ADD
+  -> Disclosure-prepend. DESIGN-DECISION: sequential v1, parallel-
+  optimization jaan-boojh kar deferred (atomic-build: correctness pehle).
+- GAP MILA (design-review mein, code likhne se pehle): Memory-ADD flow
+  mein missing thi - explicitly wire kiya.
+- config.py mein USER_ID = "raghav" production-constant add kiya; tests
+  apna dedicated test-id use karte hain, real-memory kabhi pollute nahi
+  hoti.
+- chat_loop.py - interactive CLI. Billie khud pehle disclosure+greeting
+  bolti hai (seedha function-call, is_first_message path use nahi hota
+  yahan - abhi tak koi user-message hi nahi hai jiska "reply" ho).
+- debug parameter (handle_message(), default False, non-breaking) -
+  safety-tier/mood/retrieved-memories print karta hai, "reply achha laga"
+  se zyada evidence-based verification ke liye.
+- GAP MILA (LIVE-TESTING SE, scripted-test se NAHI): ACUTE ke turant baad
+  "I was just kidding" - single-message-scoped Gate 2 isse NONE padhta
+  hai, Billie joke-mode mein chali gayi thi - genuine minimization-
+  pattern risk.
+- FIX: orchestrator ab previous_tier track karta hai; pichla-ACUTE +
+  abhi-nahi -> FIXED (non-improvised) gentle check-in, resume-normal
+  nahi karta. test_orchestrator.py mein permanently regression-locked.
+- Cosmetic cleanup (source-code se root-cause verify kiya, guess nahi):
+  mem0 ke spaCy/fastembed warnings optional-features ke baare mein hain
+  jo MEM0_CONFIG use hi nahi karta - logging.getLogger("mem0").setLevel
+  (ERROR) se suppress kiya. QdrantClient.__del__ shutdown-ImportError
+  Python teardown-timing-quirk hai (verified: __del__ sirf close() call
+  karta hai) - atexit se explicitly, shutdown se pehle close kiya.
+- STATUS: Step 7 (Orchestrator) COMPLETE - live end-to-end conversation
+  chat_loop.py se verified.
+
+22/09/2026
+- GAP MILA (LIVE-TESTING SE): ek message mein self-harm AUR explicit
+  threat-to-others dono - system ne SAME self-harm-only ACUTE response
+  diya, jo threat-to-others ke liye mismatched hai.
+- DESIGN-PRINCIPLE (researched, assume nahi kiya): real-time mein user
+  ka asli-intent verify karna genuinely unsolved-problem hai AI-safety
+  research mein - industry-answer hai "intent-guess mat karo, output/
+  category pe grade karo." Isliye self-harm-risk aur harm-to-others-risk
+  ko do INDEPENDENT dimensions treat kiya - ek message dono trigger kar
+  sakta hai, DONO responses aate hain, "kaunsa asli hai" resolve nahi
+  karte.
+- Gate 1b (check_other_harm, moderation_gate.py) - OpenAI ke violence/
+  harassment_threatening/illicit_violent categories check karta hai
+  (exact field-names source-inspection se verify kiye). Jaan-boojh kar
+  check_moderation() se ALAG function - existing tested-Gate1 kabhi
+  regression-risk mein nahi daala.
+- safety_manager.py mein other_harm_flagged field add kiya
+  (SafetyAssessment) - koi resolution-logic nahi, sirf ek aur
+  independent flag.
+- OTHER_HARM_RESPONSE (safety_responses.py) - fixed, non-improvised,
+  ACUTE_RESPONSE se distinct.
+- orchestrator.py: ACUTE ya other_harm_flagged, dono ke fixed-responses
+  combine hoke ek reply banते hain (either/or nahi).
+- VERIFIED: eval_suite_other_harm.py 4/4 (do false-positive stress-tests:
+  violent-movie-discussion, sad-news-reading - dono correctly NOT flagged);
+  test_orchestrator.py 6/6, naya combined-case (original-gap) se dono
+  response-parts saath present confirm hue; chat_loop.py se live-tested.
+- STATUS: self-harm-vs-harm-to-others gap - FIXED, scripted-eval aur
+  live-conversation dono se verified.

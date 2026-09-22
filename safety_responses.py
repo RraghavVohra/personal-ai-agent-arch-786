@@ -36,6 +36,14 @@ MODERATE_RESPONSE_SUFFIX = (
     "kar sakta hai. Agar chahiye toh main resources dhundhne mein help kar sakta hoon.)"
 )
 
+OTHER_HARM_RESPONSE = (
+    "Ruk bhai, ek second - jo tune abhi bola, usme doosron ko nuksaan "
+    "pahunchane ki baat bhi hai. Main isme kisi tarah se help nahi kar "
+    "sakta, aur yeh genuinely serious hai. Please abhi kisi professional "
+    "ya emergency-services (112) se baat kar - chahe jo bhi wajah ho aisa "
+    "sochne ki."
+)
+
 ACUTE_FOLLOWUP = (
     "Ek second bhai - chahe kidding mein bola ho ya nahi, main sach mein "
     "confirm karna chahta tha ki sab thik hai. Agar kabhi genuinely aisa "

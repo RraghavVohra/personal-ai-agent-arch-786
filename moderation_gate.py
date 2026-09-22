@@ -76,3 +76,29 @@ def check_moderation(user_message: str) -> bool:
     except Exception as e:
         print(f"[moderation_gate] Check fail hua, fail-closed treating: {e}")
         return True
+
+# Doosron ko nuksaan pahunchane ki threat/intent - self-harm se
+# COMPLETELY ALAG risk-dimension. OpenAI ke actual category-fields
+# verify kiye (violence, harassment_threatening, illicit_violent)
+OTHER_HARM_CATEGORIES = ["violence", "harassment/threatening", "illicit/violent"]
+
+
+def check_other_harm(user_message: str) -> bool:
+    """
+    Gate 1b - jaan-boojh kar check_moderation() se ALAG function hai
+    (translate+moderate dobara chalta hai, thoda extra-cost) - taaki
+    self-harm-Gate1 ka already-tested behavior kabhi touch na ho.
+    """
+    try:
+        translated = _translate_to_english(user_message)
+        response = client.moderations.create(model="omni-moderation-latest", input=translated)
+        scores = response.results[0].category_scores
+
+        for category in OTHER_HARM_CATEGORIES:
+            attr_name = category.replace("-", "_").replace("/", "_")
+            if getattr(scores, attr_name) > 0.3:
+                return True
+        return False
+    except Exception as e:
+        print(f"[moderation_gate] Other-harm check fail hua, fail-closed: {e}")
+        return True
